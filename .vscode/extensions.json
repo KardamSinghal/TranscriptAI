@@ -1,19 +1,13 @@
 {
   "recommendations": [
-    // Python - Backend Development
     "ms-python.python",
     "ms-python.vscode-pylance",
     "ms-python.black-formatter",
     "charliermarsh.ruff",
-    // TypeScript/JavaScript - Frontend Development
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
-    // Dev Containers & Docker
     "ms-vscode-remote.remote-containers",
-    "ms-azuretools.vscode-docker",
-    // Optional but recommended
-    "GitHub.copilot",
-    "eamodio.gitlens"
+    "ms-azuretools.vscode-docker"
   ],
   "unwantedRecommendations": [
     // Avoid conflicts with our Ruff + Black setup

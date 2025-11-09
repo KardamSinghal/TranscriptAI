@@ -39,7 +39,7 @@ cd ..
 echo "✅ Frontend dependencies installed"
 
 echo "🔧 Installing TypeScript globally..."
-npm install -g typescript@5.9.3
+sudo npm install -g typescript@5.9.3
 echo "✅ TypeScript installed globally"
 
 # Download Ollama model automatically
