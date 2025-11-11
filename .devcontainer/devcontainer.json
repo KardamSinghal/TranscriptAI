@@ -67,5 +67,12 @@
     "ghcr.io/devcontainers/features/github-cli:1": {
       "version": "latest"
     }
+  },
+  
+  // In case Codespaces is used a decent machine is required for local AI
+  "hostRequirements": {
+    "cpus": 8,
+    "memory": "32gb",
+    "storage": "64gb"
   }
 }
