@@ -8,12 +8,25 @@ AI-powered voice transcription with Whisper and LLM cleaning. Browser-based reco
 **Features:**
 
 - 🎤 Browser-based voice recording
-- 🔊 Whisper speech-to-text (runs locally)
+- 🔊 English Whisper speech-to-text (runs locally)
 - 🤖 LLM cleaning (removes filler words, fixes errors)
 - 🔌 **OpenAI API-compatible** (works with Ollama, LM Studio, OpenAI, or any OpenAI-compatible API)
 - 📋 One-click copy to clipboard
 
-**📚 Want to learn more?** Full courses on AI Engineering are available at [https://www.skool.com/ai-engineer](https://www.skool.com/ai-engineer)
+Note that the vanilla version uses a smaller language model running on your CPU.
+This means the AI may not listen to system prompts that well depending on the transcript.
+The challenge for you is to change this portfolio app to advance the solution and make it your own.
+
+For example:
+- Modify it for a specific industry
+- Add GPU acceleration + stronger local LLM
+- Use a cloud AI model
+- Real-time transcription/LLM streaming
+- Multi-language support beyond English
+
+**📚 Need help and want to learn more?**
+
+Full courses on AI Engineering are available at [https://www.skool.com/ai-engineer](https://www.skool.com/ai-engineer)
 
 ---
 
@@ -81,22 +94,6 @@ npm run dev
 ```
 
 **Browser:** Open `http://localhost:3000`
-
----
-
-## Usage
-
-1. **Click "🎤 Click to Record"**
-2. **Allow microphone access** (first time only)
-3. **Speak** your text
-4. **Click again to stop**
-5. **Wait** for transcription (performance varies by hardware)
-6. **Copy** cleaned text to clipboard
-
-**Toggle LLM Cleaning:**
-
-- ✅ On: Removes "um", "uh", "like", fixes errors
-- ⬜ Off: Raw Whisper transcription only
 
 ---
 
@@ -169,23 +166,3 @@ Configure Docker Desktop resources:
 
 - Backend: Change port with `--port 8001`
 - Frontend: Edit `vite.config.js`, change `port: 3000`
-
----
-
-## Possible Extensions
-
-**GPU Support:**
-
-- Add CUDA/Metal GPU acceleration for faster LLM inference
-
-**Cloud Based AI:**
-
-- Connect to a cloud-based AI model (OpenAI, Anthropic, etc.) instead of local Ollama for stronger models
-
-**Real-time Transcription:**
-
-- Stream audio to backend for live transcription as you speak
-
-**Multi-language Support:**
-
-- Configure Whisper to transcribe in different languages
