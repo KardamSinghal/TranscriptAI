@@ -5,6 +5,8 @@ AI-powered voice transcription with Whisper and LLM cleaning. Browser-based reco
 
 **📺 Recommended Video Tutorial:** For project structure and API details, watch the full tutorial on YouTube: https://youtu.be/WUo5tKg2lnE
 
+**Agentic Branch:** Switch to the branch `checkpoint-agentic-openrouter` to build on the agentic demo from the full video on YouTube: https://youtu.be/uR_lvAZFBw0
+
 **Features:**
 
 - 🎤 Browser-based voice recording

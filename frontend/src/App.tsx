@@ -8,6 +8,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { TranscriptionResults } from './components/TranscriptionResults';
 import { AgentResults } from './components/AgentResults';
 import { ErrorMessage } from './components/ErrorMessage';
+import { Footer } from './components/Footer';
 
 interface TranscriptionResponse {
   success: boolean;
@@ -17,6 +18,12 @@ interface TranscriptionResponse {
 
 interface SystemPromptResponse {
   default_prompt: string;
+}
+
+interface CleanResponse {
+  success: boolean;
+  text?: string;
+  error?: string;
 }
 
 interface ToolCall {
@@ -48,7 +55,7 @@ function App() {
   const [cleanedText, setCleanedText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [useLLM, setUseLLM] = useState(false); // Default false - agent is separate now
-  const [useAgent, setUseAgent] = useState(true); // New: toggle for agent processing
+  const [useAgent, setUseAgent] = useState(true); // Toggle for agent processing
   const [isCopied, setIsCopied] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState('');
   const [isLoadingPrompt, setIsLoadingPrompt] = useState(true);
@@ -110,73 +117,76 @@ function App() {
     }
   }, []);
 
-  const uploadAudio = useCallback(async (audioBlob: Blob) => {
-    const formData = new FormData();
-    formData.append('audio', audioBlob, 'recording.webm');
+  const uploadAudio = useCallback(
+    async (audioBlob: Blob) => {
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
 
-    try {
-      const transcribeResponse = await fetch('/api/transcribe', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!transcribeResponse.ok) {
-        throw new Error(
-          `Transcription failed: ${transcribeResponse.statusText}`
-        );
-      }
-
-      const transcribeData =
-        (await transcribeResponse.json()) as TranscriptionResponse;
-
-      if (!transcribeData.success) {
-        throw new Error(transcribeData.error || 'Transcription failed');
-      }
-
-      setRawText(transcribeData.text || '');
-      setIsProcessing(false);
-      setError(null);
-
-      // Auto-process with agent if enabled
-      if (useAgent && transcribeData.text) {
-        void processWithAgent(transcribeData.text);
-      }
-
-      // Optional: Clean with simple LLM if enabled
-      if (useLLM && transcribeData.text) {
-        setIsCleaningWithLLM(true);
-
-        const cleanResponse = await fetch('/api/clean', {
+      try {
+        const transcribeResponse = await fetch('/api/transcribe', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text: transcribeData.text,
-            ...(systemPrompt && { system_prompt: systemPrompt }),
-          }),
+          body: formData,
         });
 
-        if (!cleanResponse.ok) {
+        if (!transcribeResponse.ok) {
+          throw new Error(
+            `Transcription failed: ${transcribeResponse.statusText}`
+          );
+        }
+
+        const transcribeData =
+          (await transcribeResponse.json()) as TranscriptionResponse;
+
+        if (!transcribeData.success) {
+          throw new Error(transcribeData.error || 'Transcription failed');
+        }
+
+        setRawText(transcribeData.text || '');
+        setIsProcessing(false);
+        setError(null);
+
+        // Auto-process with agent if enabled
+        if (useAgent && transcribeData.text) {
+          void processWithAgent(transcribeData.text);
+        }
+
+        // Optional: Clean with simple LLM if enabled
+        if (useLLM && transcribeData.text) {
+          setIsCleaningWithLLM(true);
+
+          const cleanResponse = await fetch('/api/clean', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              text: transcribeData.text,
+              ...(systemPrompt && { system_prompt: systemPrompt }),
+            }),
+          });
+
+          if (!cleanResponse.ok) {
+            setIsCleaningWithLLM(false);
+            throw new Error(`Cleaning failed: ${cleanResponse.statusText}`);
+          }
+
+          const cleanData = (await cleanResponse.json()) as CleanResponse;
+
+          if (cleanData.success && cleanData.text) {
+            setCleanedText(cleanData.text);
+          }
+
           setIsCleaningWithLLM(false);
-          throw new Error(`Cleaning failed: ${cleanResponse.statusText}`);
         }
-
-        const cleanData = (await cleanResponse.json()) as { success: boolean; text?: string };
-
-        if (cleanData.success && cleanData.text) {
-          setCleanedText(cleanData.text);
-        }
-
-        setIsCleaningWithLLM(false);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Unknown error';
+        setError('Processing failed: ' + errorMessage);
+        setIsProcessing(false);
       }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Unknown error';
-      setError('Processing failed: ' + errorMessage);
-      setIsProcessing(false);
-    }
-  }, [useLLM, useAgent, systemPrompt, processWithAgent]);
+    },
+    [useLLM, useAgent, systemPrompt, processWithAgent]
+  );
 
   const startRecording = useCallback(async () => {
     try {
@@ -204,8 +214,7 @@ function App() {
       setAgentResults(null);
       setIsCleaningWithLLM(false);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError('Microphone access denied: ' + errorMessage);
     }
   }, [uploadAudio]);
@@ -229,6 +238,7 @@ function App() {
     setError(null);
     setRawText(null);
     setCleanedText(null);
+    setAgentResults(null);
     setIsProcessing(true);
     setIsCleaningWithLLM(false);
 
@@ -258,61 +268,64 @@ function App() {
     }
   };
 
-  const handleTextSubmit = useCallback(async (text: string) => {
-    if (!text.trim()) return;
+  const handleTextSubmit = useCallback(
+    async (text: string) => {
+      if (!text.trim()) return;
 
-    try {
-      setError(null);
-      setRawText(null);
-      setCleanedText(null);
-      setAgentResults(null);
-      setIsProcessing(true);
-      setIsCleaningWithLLM(false);
+      try {
+        setError(null);
+        setRawText(null);
+        setCleanedText(null);
+        setAgentResults(null);
+        setIsProcessing(true);
+        setIsCleaningWithLLM(false);
 
-      setRawText(text);
-      setIsProcessing(false);
+        setRawText(text);
+        setIsProcessing(false);
 
-      // Auto-process with agent if enabled
-      if (useAgent) {
-        void processWithAgent(text);
-      }
+        // Auto-process with agent if enabled
+        if (useAgent) {
+          void processWithAgent(text);
+        }
 
-      // Optional: Clean with simple LLM if enabled
-      if (useLLM) {
-        setIsCleaningWithLLM(true);
+        // Optional: Clean with simple LLM if enabled
+        if (useLLM) {
+          setIsCleaningWithLLM(true);
 
-        const cleanResponse = await fetch('/api/clean', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text: text,
-            ...(systemPrompt && { system_prompt: systemPrompt }),
-          }),
-        });
+          const cleanResponse = await fetch('/api/clean', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              text: text,
+              ...(systemPrompt && { system_prompt: systemPrompt }),
+            }),
+          });
 
-        if (!cleanResponse.ok) {
+          if (!cleanResponse.ok) {
+            setIsCleaningWithLLM(false);
+            throw new Error(`Cleaning failed: ${cleanResponse.statusText}`);
+          }
+
+          const cleanData = (await cleanResponse.json()) as CleanResponse;
+
+          if (cleanData.success && cleanData.text) {
+            setCleanedText(cleanData.text);
+          }
+
           setIsCleaningWithLLM(false);
-          throw new Error(`Cleaning failed: ${cleanResponse.statusText}`);
         }
-
-        const cleanData = (await cleanResponse.json()) as { success: boolean; text?: string };
-
-        if (cleanData.success && cleanData.text) {
-          setCleanedText(cleanData.text);
-        }
-
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Unknown error';
+        setError('Processing failed: ' + errorMessage);
+        setIsProcessing(false);
         setIsCleaningWithLLM(false);
       }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Unknown error';
-      setError('Processing failed: ' + errorMessage);
-      setIsProcessing(false);
-      setIsCleaningWithLLM(false);
-    }
-  }, [useLLM, useAgent, systemPrompt, processWithAgent]);
+    },
+    [useLLM, useAgent, systemPrompt, processWithAgent]
+  );
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard
@@ -401,7 +414,9 @@ function App() {
           onPromptChange={setSystemPrompt}
         />
 
-        {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
+        {error && (
+          <ErrorMessage message={error} onDismiss={() => setError(null)} />
+        )}
 
         <TranscriptionResults
           rawText={rawText}
@@ -412,7 +427,9 @@ function App() {
           isProcessing={isProcessing}
           isOriginalExpanded={isOriginalExpanded}
           onCopy={copyToClipboard}
-          onToggleOriginalExpanded={() => setIsOriginalExpanded(!isOriginalExpanded)}
+          onToggleOriginalExpanded={() =>
+            setIsOriginalExpanded(!isOriginalExpanded)
+          }
         />
 
         <AgentResults
@@ -422,6 +439,8 @@ function App() {
           error={agentResults?.error}
           isProcessing={isProcessingAgent}
         />
+
+        <Footer />
       </div>
     </div>
   );

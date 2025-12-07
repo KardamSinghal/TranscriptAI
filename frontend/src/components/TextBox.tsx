@@ -23,7 +23,9 @@ export function TextBox({
     styles.textBox,
     styles[mode],
     isLoading && styles.loading,
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   const handleCopy = () => {
     if (onCopy && value) {
