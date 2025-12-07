@@ -7,6 +7,7 @@ import { TextInputZone } from './components/TextInputZone';
 import { SettingsPanel } from './components/SettingsPanel';
 import { TranscriptionResults } from './components/TranscriptionResults';
 import { ErrorMessage } from './components/ErrorMessage';
+import { Footer } from './components/Footer';
 
 interface TranscriptionResponse {
   success: boolean;
@@ -347,6 +348,8 @@ function App() {
           onCopy={copyToClipboard}
           onToggleOriginalExpanded={() => setIsOriginalExpanded(!isOriginalExpanded)}
         />
+
+        <Footer />
       </div>
     </div>
   );

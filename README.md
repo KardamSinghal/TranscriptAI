@@ -4,6 +4,7 @@ A base for your portfolio piece to land your next AI engineering job.
 AI-powered voice transcription with Whisper and LLM cleaning. Browser-based recording interface with FastAPI backend.
 
 **📺 Recommended Video Tutorial:** For project structure and API details, watch the full tutorial on YouTube: https://youtu.be/WUo5tKg2lnE
+
 **Agentic Branch:** Switch to the branch `checkpoint-agentic-openrouter` to build on the agentic demo from the full video on YouTube: https://youtu.be/uR_lvAZFBw0
 
 **Features:**
