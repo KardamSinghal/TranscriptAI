@@ -8,6 +8,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from github_integration import check_github_config
 from transcription import TranscriptionService
 
 load_dotenv()
@@ -36,6 +37,10 @@ async def lifespan(app: FastAPI):
         llm_api_key=os.getenv("LLM_API_KEY"),
         llm_model=os.getenv("LLM_MODEL"),
     )
+
+    # Log GitHub integration status
+    check_github_config()
+
     print("✅ Ready!")
     yield
 

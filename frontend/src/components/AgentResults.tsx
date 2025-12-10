@@ -40,6 +40,11 @@ export function AgentResults({ toolCalls, results, summary, error, isProcessing 
   // Find decision record result
   const decisionResult = results?.find(r => r.type === 'decision_record');
 
+  // Collect all GitHub issues from results
+  const githubIssues = results?.flatMap(r =>
+    r.github_issues?.filter(issue => issue.github_issue_url) ?? []
+  ) ?? [];
+
   // Create blob URL for calendar download
   const handleCalendarDownload = () => {
     if (!calendarResult?.content || !calendarResult.filename) return;
@@ -94,6 +99,36 @@ export function AgentResults({ toolCalls, results, summary, error, isProcessing 
             >
               Download .ics File
             </button>
+          </div>
+        )}
+
+        {/* GitHub Issues */}
+        {githubIssues.length > 0 && (
+          <div className={styles.githubSection}>
+            <div className={styles.githubHeader}>
+              🔗 GitHub Issues Created ({githubIssues.length})
+            </div>
+            <ul className={styles.githubList}>
+              {githubIssues.map((issue, idx) => (
+                <li key={idx} className={styles.githubItem}>
+                  <a
+                    href={issue.github_issue_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.githubLink}
+                  >
+                    {issue.title || `Issue #${issue.github_issue_number}`}
+                  </a>
+                  {issue.labels && issue.labels.length > 0 && (
+                    <span className={styles.githubLabels}>
+                      {issue.labels.map((label, labelIdx) => (
+                        <span key={labelIdx} className={styles.githubLabel}>{label}</span>
+                      ))}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 

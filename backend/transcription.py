@@ -13,8 +13,8 @@ from openai import OpenAI
 
 from agent import process_transcript
 
-PROMPT_FILE = Path(__file__).parent / "system_prompt.txt"
-SYSTEM_PROMPT = PROMPT_FILE.read_text().strip()
+PROMPTS_DIR = Path(__file__).parent / "prompts"
+SYSTEM_PROMPT = (PROMPTS_DIR / "transcript_cleaner.txt").read_text().strip()
 
 
 class TranscriptionService:

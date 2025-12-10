@@ -1,11 +1,12 @@
 """CalendarTool - creates .ics calendar files for action items."""
 
+import json
 import os
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 from uuid import uuid4
-import json
+
+from github_integration import create_github_issues_batch
 
 from .base import Tool
 
@@ -34,7 +35,7 @@ Extract and organize:
 Creates a .ics calendar file with all meeting context for easy reference."""
 
     @property
-    def input_schema(self) -> Dict[str, Any]:
+    def input_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
@@ -113,7 +114,7 @@ Creates a .ics calendar file with all meeting context for easy reference."""
             "required": ["meeting_title", "meeting_type", "meeting_summary", "key_points", "action_items", "reminder_date"],
         }
 
-    def execute(self, tool_input: Dict[str, Any]) -> Dict[str, Any]:
+    def execute(self, tool_input: dict[str, Any]) -> dict[str, Any]:
         """Execute the tool - generate valid ICS file from LLM-provided JSON."""
         print(f"\n[calendar] Processing '{tool_input['meeting_title']}' ({tool_input['meeting_type']})")
         print(f"[calendar] {len(tool_input.get('action_items', []))} action items, reminder on {tool_input['reminder_date']}")
@@ -136,7 +137,7 @@ Creates a .ics calendar file with all meeting context for easy reference."""
 
             print(f"[calendar] ✓ Generated {filename}")
 
-            return {
+            result = {
                 "status": "success",
                 "type": "calendar",
                 "content": ics_content,
@@ -144,6 +145,30 @@ Creates a .ics calendar file with all meeting context for easy reference."""
                 "reminder_time": reminder_time.isoformat(),
                 "data": tool_input,
             }
+
+            # Create GitHub issues for all action items in parallel (if configured)
+            action_items = tool_input.get("action_items", [])
+
+            if action_items:
+                tasks_data = [
+                    {
+                        "meeting_title": tool_input["meeting_title"],
+                        "meeting_type": tool_input.get("meeting_type", "other"),
+                        "task": action.get("task"),
+                        "owner": action.get("owner", "Unassigned"),
+                        "due_date": action.get("due_date", "No due date"),
+                        "priority": action.get("priority", "medium"),
+                        "context": tool_input.get("meeting_summary", ""),
+                        "key_points": tool_input.get("key_points", []),
+                    }
+                    for action in action_items
+                ]
+                github_issues = create_github_issues_batch("task", tasks_data)
+
+                if github_issues:
+                    result["github_issues"] = github_issues
+
+            return result
 
         except Exception as e:
             print(f"[calendar] ✗ Error: {e}")

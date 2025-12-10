@@ -2,7 +2,9 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
+
+from github_integration import create_github_issue
 
 from .base import Tool
 
@@ -41,7 +43,7 @@ Extract and organize:
 Creates a comprehensive incident report for documentation and review."""
 
     @property
-    def input_schema(self) -> Dict[str, Any]:
+    def input_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
@@ -171,7 +173,7 @@ Creates a comprehensive incident report for documentation and review."""
             ],
         }
 
-    def execute(self, tool_input: Dict[str, Any]) -> Dict[str, Any]:
+    def execute(self, tool_input: dict[str, Any]) -> dict[str, Any]:
         """Execute the tool - generate markdown file and return structured JSON data."""
         severity = tool_input.get("severity", "medium").upper()
         print(f"\n[incident] Processing incident: '{tool_input['incident_title']}'")
@@ -185,12 +187,19 @@ Creates a comprehensive incident report for documentation and review."""
 
             print(f"[incident] ✓ Saved report to {filepath.name}")
 
-            return {
+            result = {
                 "status": "success",
                 "type": "incident_report",
                 "markdown_content": markdown,
                 "data": tool_input,
             }
+
+            # Create GitHub issue (if configured)
+            github_result = create_github_issue("incident_report", tool_input)
+            if github_result:
+                result["github_issues"] = [github_result]
+
+            return result
 
         except Exception as e:
             print(f"[incident] ✗ Error: {e}")
@@ -214,7 +223,7 @@ Creates a comprehensive incident report for documentation and review."""
 
 # Formatting helper functions (implementation details)
 
-def build_incident_report_markdown(data: Dict[str, Any]) -> str:
+def build_incident_report_markdown(data: dict[str, Any]) -> str:
     """Build incident report markdown from LLM-provided JSON data."""
     severity = data.get("severity", "medium").upper()
     severity_emoji = {"CRITICAL": "🔴", "HIGH": "🟠",

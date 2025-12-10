@@ -124,6 +124,16 @@ export interface ToolCall {
   input: Record<string, unknown>;
 }
 
+export interface GitHubIssueInfo {
+  status: string;
+  title?: string;
+  labels?: string[];
+  repo?: string;
+  github_issue_created?: boolean;
+  github_issue_url?: string;
+  github_issue_number?: number;
+}
+
 export interface ToolResult {
   status: string;
   type?: string;
@@ -132,6 +142,7 @@ export interface ToolResult {
   markdown_content?: string;
   data?: IncidentReportData | CalendarData | DecisionRecordData | Record<string, unknown>;
   message?: string;
+  github_issues?: GitHubIssueInfo[];
 }
 
 export interface AgentResponse {
