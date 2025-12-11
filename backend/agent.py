@@ -153,12 +153,18 @@ For calendar reminders: If the transcript mentions specific deadlines, set remin
 
         system_prompt = """You are a helpful assistant explaining what you did with a transcript.
 
-Write a friendly, concise summary (2-4 sentences) explaining:
-1. What you found in the transcript
-2. What actions you took
-3. What the user should do next (if applicable)
+Write a well-formatted summary using Markdown. Structure your response as:
+- A brief opening sentence about what you found
+- A bulleted list of actions taken (use **bold** for key items)
+- Any next steps for the user
 
-Be conversational and helpful. Don't use technical jargon like "tool_calls" or "agent" - just explain what you did."""
+Use proper Markdown formatting:
+- Use **bold** for emphasis on important items
+- Use bullet points (`-`) for lists
+- Keep paragraphs separated with blank lines
+- Be concise but clear (3-5 short paragraphs or bullet sections)
+
+IMPORTANT: Do NOT use emojis or excited openings like "Analysis Complete!" or "Great news!". Just start directly with the content in a professional tone. Don't use technical jargon like "tool_calls" or "agent" - just explain what you did."""
 
         tools_summary = json.dumps(
             {"tool_calls": tool_calls, "results": results}, indent=2
@@ -168,7 +174,7 @@ Be conversational and helpful. Don't use technical jargon like "tool_calls" or "
 
 {tools_summary}
 
-Write a friendly 2-4 sentence summary for the user explaining what I did and what they should do next."""
+Write a Markdown-formatted summary for the user explaining what I did and what they should do next."""
 
         request_payload = {
             "model": self.model,
@@ -177,7 +183,7 @@ Write a friendly 2-4 sentence summary for the user explaining what I did and wha
                 {"role": "user", "content": user_prompt},
             ],
             "temperature": 0.7,
-            "max_tokens": 200,
+            "max_tokens": 600,
         }
 
         print("📋 FULL API REQUEST:")
@@ -202,8 +208,13 @@ Write a friendly 2-4 sentence summary for the user explaining what I did and wha
 
     def _generate_no_tools_summary(self, transcript: str) -> str:
         """Generate a summary when no tools were needed."""
-        system_prompt = "You are a helpful assistant explaining why a transcript didn't need any special processing. Be concise and friendly."
-        user_prompt = f"I analyzed this transcript but didn't find anything that needed special processing (like action items, blockers, or urgent issues). Explain why in 1-2 sentences:\n\n{transcript[:500]}"
+        system_prompt = """You are a helpful assistant explaining why a transcript didn't need any special processing.
+
+Use Markdown formatting:
+- Be concise and friendly (1-2 short paragraphs)
+- Use **bold** for emphasis if needed
+- Keep it simple since no actions were taken"""
+        user_prompt = f"I analyzed this transcript but didn't find anything that needed special processing (like action items, blockers, or urgent issues). Explain why in Markdown format:\n\n{transcript[:500]}"
 
         try:
             response = self.llm_client.chat.completions.create(
